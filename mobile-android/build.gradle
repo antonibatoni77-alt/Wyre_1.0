@@ -1,0 +1,19 @@
+// google-services is wired through the classic buildscript classpath because
+// the plugin marker artifact does not resolve through the Aliyun mirrors this
+// network depends on. Applied in app/build.gradle only when
+// app/google-services.json exists (background push becomes active).
+buildscript {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+plugins {
+    id 'com.android.application' version '8.5.2' apply false
+}

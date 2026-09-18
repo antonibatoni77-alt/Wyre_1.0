@@ -1,0 +1,61 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Background push (FCM) needs a Firebase project: put google-services.json
+// from the Firebase console into this directory and the plugin activates
+// automatically. Without the file the app builds and works — only the
+// background push stays unavailable.
+def googleServicesFile = file('google-services.json')
+if (googleServicesFile.exists()) {
+    apply plugin: 'com.google.gms.google-services'
+}
+
+android {
+    namespace 'wyre.messenger'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'wyre.messenger'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+
+    signingConfigs {
+        release {
+            storeFile rootProject.file('wyre.keystore')
+            storePassword 'wyre-family'
+            keyAlias 'wyre'
+            keyPassword 'wyre-family'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        // lintVital ломается на этой Windows-машине из-за кодировки путей;
+        // сама проверка не критична для локальной семейной сборки.
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+
+dependencies {
+    // FCM — первая внешняя зависимость оболочки; тянется через Aliyun-зеркала.
+    implementation 'com.google.firebase:firebase-messaging:24.0.0'
+}

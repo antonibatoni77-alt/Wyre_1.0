@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Настройки Wyre</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body {
+      background: #0b0c12;
+      color: #f7f8fc;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      font-size: 13px;
+      letter-spacing: -0.01em;
+      display: flex;
+      flex-direction: column;
+      padding: 22px;
+      box-sizing: border-box;
+      overflow-y: auto;
+    }
+    h1 { font-size: 16px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.04em; }
+    .sub { color: #8f96a8; font-size: 11px; margin: 0 0 18px; }
+    label.field { display: block; margin-bottom: 14px; }
+    label.field span { display: block; font-size: 11px; font-weight: 600; color: #8f96a8; margin-bottom: 6px; }
+    input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(18, 21, 34, 0.6);
+      color: #f7f8fc;
+      font: inherit;
+      outline: none;
+    }
+    input[type="text"]:focus { border-color: rgba(139, 92, 246, 0.55); }
+    .row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(18, 21, 34, 0.6);
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .row input { margin-top: 2px; accent-color: #8b5cf6; }
+    .row b { display: block; font-size: 12px; font-weight: 600; }
+    .row small { color: #8f96a8; font-size: 10px; line-height: 1.45; display: block; margin-top: 2px; }
+    .status { font-size: 10px; margin: 4px 2px 12px; }
+    .ok { color: #34d399; }
+    .err { color: #f87171; }
+    .actions { margin-top: auto; display: flex; gap: 10px; }
+    button {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: #f7f8fc;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button.primary { background: linear-gradient(135deg, #8b5cf6, #2563eb); border: none; }
+    button:disabled { opacity: 0.5; cursor: default; }
+    .linkrow { margin-top: 12px; text-align: center; }
+    .linkrow button { flex: none; background: none; border: none; color: #8f96a8; text-decoration: underline; font-weight: 400; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h1>Настройки Wyre</h1>
+  <p class="sub">Приложение для Windows · уведомления, звонки и работа в фоне</p>
+
+  <label class="field">
+    <span>Адрес сервера Wyre</span>
+    <input id="serverUrl" type="text" placeholder="https://wyre.example.com" spellcheck="false" />
+  </label>
+  <p id="urlStatus" class="status"></p>
+
+  <label class="row">
+    <input id="autostart" type="checkbox" />
+    <span><b>Запускать при включении Windows</b><small>Wyre стартует скрытым в области уведомлений, чтобы вы не пропускали сообщения и звонки.</small></span>
+  </label>
+
+  <label class="row">
+    <input id="closeToTray" type="checkbox" />
+    <span><b>Сворачивать в область уведомлений</b><small>Закрытие окна не завершает приложение — Wyre продолжает работать в фоне.</small></span>
+  </label>
+
+  <label class="row">
+    <input id="allowSelfSigned" type="checkbox" />
+    <span><b>Доверять самоподписанному сертификату</b><small>Только для локального сервера разработки Wyre. Для обычного сервера оставьте выключенным.</small></span>
+  </label>
+
+  <div class="actions">
+    <button id="save" class="primary">Сохранить</button>
+  </div>
+  <div class="linkrow">
+    <button id="logs">Открыть журнал приложения</button>
+  </div>
+
+  <script>
+    const desktop = window.wyreDesktop;
+    const $ = (id) => document.getElementById(id);
+    let savedConfig = null;
+
+    function validateUrl() {
+      const value = $('serverUrl').value.trim();
+      if (!value) { $('urlStatus').textContent = ''; return null; }
+      const normalized = /^https?:\/\//i.test(value) ? value.replace(/\/+$/, '') : `https://${value.replace(/\/+$/, '')}`;
+      try {
+        const url = new URL(normalized);
+        if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') {
+          $('urlStatus').textContent = 'Адрес должен использовать https://';
+          $('urlStatus').className = 'status err';
+          return null;
+        }
+        $('urlStatus').textContent = `Будет использован адрес: ${url.origin}`;
+        $('urlStatus').className = 'status ok';
+        return url.origin;
+      } catch {
+        $('urlStatus').textContent = 'Некорректный адрес';
+        $('urlStatus').className = 'status err';
+        return null;
+      }
+    }
+
+    (async () => {
+      if (!desktop) {
+        $('urlStatus').textContent = 'Настройки недоступны: оболочка не инициализирована';
+        $('urlStatus').className = 'status err';
+        $('save').disabled = true;
+        return;
+      }
+      savedConfig = await desktop.getConfig();
+      $('serverUrl').value = savedConfig.serverUrl ?? '';
+      $('autostart').checked = Boolean(savedConfig.autostart);
+      $('closeToTray').checked = savedConfig.closeToTray !== false;
+      $('allowSelfSigned').checked = Boolean(savedConfig.allowSelfSigned);
+      validateUrl();
+      $('serverUrl').addEventListener('input', validateUrl);
+      $('save').addEventListener('click', async () => {
+        const origin = validateUrl();
+        if ($('serverUrl').value.trim() && !origin) return;
+        await desktop.setConfig({
+          serverUrl: origin ?? '',
+          autostart: $('autostart').checked,
+          closeToTray: $('closeToTray').checked,
+          allowSelfSigned: $('allowSelfSigned').checked,
+        });
+        $('save').textContent = 'Сохранено ✓';
+        setTimeout(() => { $('save').textContent = 'Сохранить'; }, 1600);
+      });
+      $('logs').addEventListener('click', () => desktop.openLogs());
+    })();
+  </script>
+</body>
+</html>

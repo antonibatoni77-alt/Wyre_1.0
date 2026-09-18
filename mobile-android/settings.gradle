@@ -1,0 +1,24 @@
+pluginManagement {
+    repositories {
+        // Aliyun mirrors first: dl.google.com / maven.google.com are not
+        // reachable from this network. The fallbacks stay for other setups.
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        mavenCentral()
+        google()
+    }
+}
+
+rootProject.name = 'Wyre'
+include ':app'

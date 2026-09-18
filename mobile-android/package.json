@@ -1,0 +1,9 @@
+{
+  "name": "wyre-mobile-android",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Wyre для Android: нативная WebView-оболочка над веб-приложением мессенджера. Сборка через Gradle (см. README проекта).",
+  "scripts": {
+    "icons": "node tools/make-icons.js"
+  }
+}

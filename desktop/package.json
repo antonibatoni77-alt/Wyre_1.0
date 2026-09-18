@@ -1,0 +1,23 @@
+{
+  "name": "wyre-desktop",
+  "productName": "Wyre",
+  "version": "1.0.0",
+  "description": "Wyre — приватный мессенджер для семьи (приложение для Windows)",
+  "main": "main.js",
+  "author": "Wyre",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+ "icon": "node tools/make-icon.js",
+ "dist": "electron-builder --win nsis --x64 --config electron-builder.config.js"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^26.15.3"
+  },
+  "optionalDependencies": {
+    "@nut-tree-fork/nut-js": "*"
+  }
+}
